@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Персик</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Дневник кормления Персика">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Персик">
+  <meta name="theme-color" content="#FBF4EA" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#221B17" media="(prefers-color-scheme: dark)">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="app">
+  <main class="views">
+
+    <section class="view is-active" id="view-home">
+      <div class="install" id="install-hint" hidden>
+        <p>Добавь Персика на экран «Домой»: <b>Поделиться</b> → <b>На экран «Домой»</b></p>
+        <button type="button" id="install-close" aria-label="Скрыть">×</button>
+      </div>
+
+      <header class="header">
+        <p class="header__eyebrow" id="home-date"></p>
+        <h1 class="header__title">Персик</h1>
+      </header>
+
+      <div class="hero">
+        <button class="bubble" id="bubble" type="button" aria-live="polite">
+          <p id="bubble-text"></p>
+        </button>
+        <div class="hero__sticker-wrap">
+          <img class="hero__sticker" id="hero-sticker" alt="" src="stickers/detective.webp">
+        </div>
+        <span class="pill" id="status-pill"></span>
+      </div>
+
+      <div class="feed">
+        <div class="feed__ring-wrap" id="ring-wrap">
+          <svg class="ring" viewBox="0 0 220 220" aria-hidden="true">
+            <circle class="ring__track" cx="110" cy="110" r="100"/>
+            <circle class="ring__progress" id="ring-progress" cx="110" cy="110" r="100"/>
+            <circle class="ring__tick" id="tick-min" r="5"/>
+            <circle class="ring__tick" id="tick-due" r="5"/>
+          </svg>
+          <button class="paw" id="paw-btn" type="button" aria-label="Покормить Персика">
+            <svg viewBox="0 0 64 64" aria-hidden="true">
+              <ellipse cx="21" cy="21" rx="7" ry="9.5" transform="rotate(-18 21 21)"/>
+              <ellipse cx="43" cy="21" rx="7" ry="9.5" transform="rotate(18 43 21)"/>
+              <ellipse cx="8.5" cy="35" rx="6" ry="8" transform="rotate(-42 8.5 35)"/>
+              <ellipse cx="55.5" cy="35" rx="6" ry="8" transform="rotate(42 55.5 35)"/>
+              <path d="M32 29c-9.5 0-19 8.5-19 18 0 6.5 5 10 10.5 8.5 3.5-1 5.5-2 8.5-2s5 1 8.5 2c5.5 1.5 10.5-2 10.5-8.5 0-9.5-9.5-18-19-18z"/>
+            </svg>
+          </button>
+        </div>
+        <p class="feed__label" id="paw-label"></p>
+        <p class="feed__meta" id="feed-meta"></p>
+        <p class="feed__next" id="feed-next"></p>
+      </div>
+
+      <section class="card">
+        <div class="card__head">
+          <h2 class="card__title">Сегодня</h2>
+          <span class="card__meta" id="today-count"></span>
+        </div>
+        <ul class="log" id="today-log"></ul>
+        <button class="btn btn--ghost" id="add-manual" type="button">+ Добавить вручную</button>
+      </section>
+    </section>
+
+    <section class="view" id="view-diary">
+      <header class="header">
+        <p class="header__eyebrow">Дневник кормления</p>
+        <h1 class="header__title">Дневник</h1>
+      </header>
+
+      <section class="card">
+        <div class="cal__nav">
+          <button class="icon-btn" id="cal-prev" type="button" aria-label="Предыдущий месяц">‹</button>
+          <h2 class="cal__month" id="cal-month"></h2>
+          <button class="icon-btn" id="cal-next" type="button" aria-label="Следующий месяц">›</button>
+        </div>
+        <div class="cal__weekdays">
+          <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+        </div>
+        <div class="cal__grid" id="cal-grid"></div>
+        <div class="cal__legend">
+          <span><i class="q-good"></i>Хороший день</span>
+          <span><i class="q-meh"></i>С опозданием</span>
+          <span><i class="q-bad"></i>Персик страдал</span>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card__head">
+          <h2 class="card__title" id="day-title"></h2>
+          <span class="card__meta" id="day-count"></span>
+        </div>
+        <div id="day-body"></div>
+      </section>
+
+      <section class="card">
+        <div class="card__head">
+          <h2 class="card__title">За месяц</h2>
+        </div>
+        <div class="stats" id="month-stats"></div>
+        <p class="card__note" id="month-note"></p>
+      </section>
+    </section>
+
+    <section class="view" id="view-persik">
+      <header class="header">
+        <p class="header__eyebrow">Стикеры и настройки</p>
+        <h1 class="header__title">Персик</h1>
+      </header>
+
+      <div class="stickers" id="sticker-grid"></div>
+
+      <section class="card">
+        <div class="card__head">
+          <h2 class="card__title">Правила кормления</h2>
+        </div>
+        <div id="settings-rules"></div>
+      </section>
+
+      <section class="card">
+        <div class="card__head">
+          <h2 class="card__title">Тихие часы</h2>
+          <span class="card__meta">Персик спит</span>
+        </div>
+        <div id="settings-quiet"></div>
+      </section>
+
+      <section class="card">
+        <div class="card__head">
+          <h2 class="card__title">Данные</h2>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn--ghost" id="data-export" type="button">Экспорт</button>
+          <button class="btn btn--ghost" id="data-import" type="button">Импорт</button>
+        </div>
+        <input type="file" id="data-file" accept="application/json,.json" hidden>
+        <button class="btn btn--danger" id="data-reset" type="button">Стереть всё</button>
+      </section>
+
+      <p class="about">perspay · дневник кормления Персика</p>
+    </section>
+
+  </main>
+
+  <nav class="tabbar" aria-label="Разделы">
+    <button class="tab is-active" type="button" data-view="home">
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <ellipse cx="21" cy="21" rx="7" ry="9.5" transform="rotate(-18 21 21)"/>
+        <ellipse cx="43" cy="21" rx="7" ry="9.5" transform="rotate(18 43 21)"/>
+        <ellipse cx="8.5" cy="35" rx="6" ry="8" transform="rotate(-42 8.5 35)"/>
+        <ellipse cx="55.5" cy="35" rx="6" ry="8" transform="rotate(42 55.5 35)"/>
+        <path d="M32 29c-9.5 0-19 8.5-19 18 0 6.5 5 10 10.5 8.5 3.5-1 5.5-2 8.5-2s5 1 8.5 2c5.5 1.5 10.5-2 10.5-8.5 0-9.5-9.5-18-19-18z"/>
+      </svg>
+      <span>Сегодня</span>
+    </button>
+    <button class="tab" type="button" data-view="diary">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M7 2a1 1 0 0 1 1 1v1h8V3a1 1 0 1 1 2 0v1h1a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h1V3a1 1 0 0 1 1-1zm13 8H4v9a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-9zM8 13a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm4 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z"/>
+      </svg>
+      <span>Дневник</span>
+    </button>
+    <button class="tab" type="button" data-view="persik">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 21s-7.5-4.6-9.5-9.3C1.2 8.6 3.2 5 6.8 5c2 0 3.6 1.1 4.4 2.5h1.6C13.6 6.1 15.2 5 17.2 5c3.6 0 5.6 3.6 4.3 6.7C19.5 16.4 12 21 12 21z"/>
+      </svg>
+      <span>Персик</span>
+    </button>
+  </nav>
+</div>
+
+<div class="toast" id="toast" hidden>
+  <span id="toast-text"></span>
+  <button type="button" id="toast-action"></button>
+</div>
+
+<div class="sheet-backdrop" id="sheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true"></div>
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
