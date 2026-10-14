@@ -226,7 +226,7 @@ function renderWidget() {
     <button class="btn btn--primary" type="button" data-widget="howto">Как поставить виджет</button>` : '';
   els.widget.innerHTML = `
     <div class="row">
-      <div><span class="row__label">Синхронизация для виджета</span><span class="row__hint">Включай там, где ведёшь дневник: у Safari и значка на экране «Домой» разная память</span></div>
+      <div><span class="row__label">Синхронизация для виджета</span><span class="row__hint">Дневник уходит на сервер, виджет читает его оттуда. Скрипт копируй из того приложения, где ведёшь дневник</span></div>
       <label class="switch"><input type="checkbox" data-widget="toggle" ${meta.enabled ? 'checked' : ''}><i></i></label>
     </div>
     ${enabledRows}

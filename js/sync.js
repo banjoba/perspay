@@ -6,15 +6,16 @@ const META_KEY = 'perspay.sync';
 const PUSH_DELAY_MS = 1500;
 
 const listeners = new Set();
-let meta = loadMeta();
 let pushTimer = null;
 
 function loadMeta() {
+  let stored = {};
   try {
-    return JSON.parse(localStorage.getItem(META_KEY)) || {};
+    stored = JSON.parse(localStorage.getItem(META_KEY)) || {};
   } catch {
-    return {};
+    stored = {};
   }
+  return { ...stored, token: stored.token || makeToken(), enabled: stored.enabled !== false };
 }
 
 function saveMeta() {
@@ -30,6 +31,8 @@ function makeToken() {
   const bytes = crypto.getRandomValues(new Uint8Array(16));
   return [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
+
+let meta = loadMeta();
 
 export function getSyncMeta() {
   return meta;
@@ -128,6 +131,7 @@ export function widgetStub(token) {
 }
 
 export function initSync() {
+  saveMeta();
   subscribe(() => schedulePush());
   document.addEventListener('visibilitychange', () => {
     if (document.hidden && pushTimer) pushNow({ keepalive: true });
