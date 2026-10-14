@@ -4,6 +4,7 @@ import { initDiary, renderDiary } from './views/diary.js';
 import { initPersik, renderPersik } from './views/persik.js';
 import { initSync } from './sync.js';
 
+const APP_VERSION = '3';
 const VIEW_KEY = 'perspay.view';
 const HINT_KEY = 'perspay.installHintDismissed';
 const tabs = [...document.querySelectorAll('.tab')];
@@ -56,7 +57,19 @@ function initInstallHint() {
 
 function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
-  navigator.serviceWorker.register('sw.js').catch(() => {});
+  const hadController = Boolean(navigator.serviceWorker.controller);
+  let reloading = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController || reloading) return;
+    reloading = true;
+    location.reload();
+  });
+  navigator.serviceWorker.register('sw.js').then((reg) => reg.update()).catch(() => {});
+}
+
+function showVersion() {
+  const about = document.querySelector('.about');
+  if (about) about.textContent = `perspay v${APP_VERSION} · дневник кормления Персика`;
 }
 
 initSync();
@@ -72,4 +85,5 @@ document.addEventListener('visibilitychange', () => {
 });
 window.addEventListener('pageshow', renderAll);
 initInstallHint();
+showVersion();
 registerServiceWorker();

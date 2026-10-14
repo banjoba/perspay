@@ -1,4 +1,4 @@
-import { getState, subscribe, replaceState } from './store.js';
+import { getState, subscribe, mergeFeedings } from './store.js';
 
 export const SYNC_BASE = 'https://185-173-144-167.sslip.io/persik/';
 export const WIDGET_SOURCE = 'https://banjoba.github.io/perspay/widget/persik-widget.js';
@@ -88,14 +88,14 @@ export async function pushNow({ keepalive = false } = {}) {
 }
 
 export async function pullNow() {
-  if (!meta.token) return 'no-token';
+  if (!meta.token) return { status: 'no-token' };
   const response = await fetch(SYNC_BASE + meta.token, { cache: 'no-store' });
-  if (response.status === 404) return 'empty';
+  if (response.status === 404) return { status: 'empty' };
   if (!response.ok) throw new Error(String(response.status));
   const data = await response.json();
   if (!Array.isArray(data.feedings)) throw new Error('bad data');
-  replaceState(data);
-  return 'ok';
+  if (!data.feedings.length) return { status: 'empty' };
+  return { status: 'ok', added: mergeFeedings(data.feedings), remote: data.feedings.length };
 }
 
 export function widgetStub(token) {
@@ -113,9 +113,16 @@ export function widgetStub(token) {
     '  if (fresh.includes("PERSIK_WIDGET")) { code = fresh; fm.writeString(cachePath, fresh); }',
     '} catch (e) {}',
     'if (!code && fm.fileExists(cachePath)) code = fm.readString(cachePath);',
-    'if (!code) throw new Error("Нет кода виджета: нужен интернет при первом запуске");',
-    'const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;',
-    'await new AsyncFunction("TOKEN", code)(TOKEN);',
+    'try {',
+    '  if (!code) throw new Error("нужен интернет при первом запуске");',
+    '  const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;',
+    '  await new AsyncFunction("TOKEN", code)(TOKEN);',
+    '} catch (e) {',
+    '  const w = new ListWidget();',
+    '  w.addText("Персик: " + e.message);',
+    '  Script.setWidget(w);',
+    '  Script.complete();',
+    '}',
     '',
   ].join('\n');
 }

@@ -81,6 +81,23 @@ export function updateSettings(patch) {
   persist();
 }
 
+export function mergeFeedings(incoming) {
+  const knownIds = new Set(state.feedings.map((f) => f.id));
+  const knownMinutes = new Set(state.feedings.map((f) => Math.round(f.at / 60000)));
+  let added = 0;
+  for (const f of incoming) {
+    if (!f || !Number.isFinite(f.at)) continue;
+    const minute = Math.round(f.at / 60000);
+    if (knownIds.has(f.id) || knownMinutes.has(minute)) continue;
+    state.feedings.push({ id: f.id || makeId(), at: f.at, note: f.note || '' });
+    knownMinutes.add(minute);
+    added += 1;
+  }
+  state.feedings.sort((a, b) => a.at - b.at);
+  persist();
+  return added;
+}
+
 export function replaceState(raw) {
   state = normalize(raw);
   persist();

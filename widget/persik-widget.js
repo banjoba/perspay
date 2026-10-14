@@ -1,4 +1,4 @@
-// PERSIK_WIDGET v1 — Scriptable widget for the Persik feeding diary.
+// PERSIK_WIDGET v2 — Scriptable widget for the Persik feeding diary.
 // Runs inside the stub copied from the app; TOKEN comes from the stub or the widget parameter.
 const SYNC_BASE = "https://185-173-144-167.sslip.io/persik/";
 const STICKER_BASE = "https://banjoba.github.io/perspay/stickerpack/persik-";
@@ -67,12 +67,14 @@ async function loadState() {
     const req = new Request(SYNC_BASE + token);
     req.timeoutInterval = 10;
     const data = await req.loadJSON();
-    if (!data || !Array.isArray(data.feedings)) throw new Error("bad");
+    const status = req.response ? req.response.statusCode : 200;
+    if (status === 404 || !data || !Array.isArray(data.feedings)) return { data: null, reason: "nodata" };
+    if (!data.feedings.length) return { data: null, reason: "nofeedings" };
     fm.writeString(cachePath, JSON.stringify(data));
     return { data, offline: false };
   } catch (e) {
     if (fm.fileExists(cachePath)) return { data: JSON.parse(fm.readString(cachePath)), offline: true };
-    return { data: null, offline: true };
+    return { data: null, reason: "offline" };
   }
 }
 
@@ -207,9 +209,11 @@ async function main() {
   if (!token) {
     widget = buildMessage("Нет кода", "Скопируй скрипт из приложения: Персик → Виджет на экране");
   } else {
-    const { data, offline } = await loadState();
-    if (!data) {
-      widget = buildMessage("Нет связи", "Открой приложение и нажми «Отправить» в разделе виджета");
+    const { data, offline, reason } = await loadState();
+    if (!data && reason === "offline") {
+      widget = buildMessage("Нет связи", "Проверь интернет, виджет обновится сам");
+    } else if (!data) {
+      widget = buildMessage("Записей по коду нет", "Включи синхронизацию в том приложении, где ведёшь дневник, и скопируй скрипт заново");
     } else {
       const info = describe(data, new Date());
       widget = family.startsWith("accessory") ? buildAccessory(info) : await buildHome(info, offline);

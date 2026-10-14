@@ -1,4 +1,4 @@
-const VERSION = 'perspay-v2';
+const VERSION = 'perspay-v3';
 const STICKERS = ['fed', 'full', 'night', 'ok', 'waiting', 'due', 'urgent', 'critical', 'sly', 'eating', 'morning', 'shocked', 'party', 'love', 'detective'];
 const ASSETS = [
   './',

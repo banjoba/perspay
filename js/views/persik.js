@@ -226,7 +226,7 @@ function renderWidget() {
     <button class="btn btn--primary" type="button" data-widget="howto">Как поставить виджет</button>` : '';
   els.widget.innerHTML = `
     <div class="row">
-      <div><span class="row__label">Синхронизация для виджета</span><span class="row__hint">Записи уходят на сервер, виджет читает их оттуда</span></div>
+      <div><span class="row__label">Синхронизация для виджета</span><span class="row__hint">Включай там, где ведёшь дневник: у Safari и значка на экране «Домой» разная память</span></div>
       <label class="switch"><input type="checkbox" data-widget="toggle" ${meta.enabled ? 'checked' : ''}><i></i></label>
     </div>
     ${enabledRows}
@@ -265,6 +265,7 @@ function openHowToSheet() {
   openSheet(`
     <h3>Виджет Персика</h3>
     <ol class="steps">
+      <li>Делай это в том приложении, где ведёшь дневник (значок на экране «Домой»).</li>
       <li>Поставь из App Store бесплатное приложение <b>Scriptable</b>.</li>
       <li>Нажми кнопку ниже, скрипт скопируется в буфер.</li>
       <li>В Scriptable нажми «+», вставь скрипт, назови его «Персик» и закрой.</li>
@@ -283,7 +284,7 @@ function openHowToSheet() {
 function openRestoreSheet() {
   openSheet(`
     <h3>Подтянуть записи</h3>
-    <p class="sheet__hint">Вставь код синхронизации с другого телефона. Текущие записи на этом телефоне заменятся серверными.</p>
+    <p class="sheet__hint">Вставь код синхронизации с другого телефона. Записи объединятся с текущими, ничего не удалится. Дальше этот телефон будет отправлять дневник под этим же кодом.</p>
     <div class="field"><label for="restore-code">Код</label><input id="restore-code" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="32 символа" value="${escapeHtml(getSyncMeta().token || '')}"></div>
     <p class="sheet__hint" id="restore-hint"></p>
     <button class="btn btn--primary" type="button" id="restore-go">Подтянуть</button>
@@ -302,12 +303,12 @@ async function restoreFromCode(panel) {
   adoptToken(code);
   try {
     const result = await pullNow();
-    if (result === 'empty') {
-      hint.textContent = 'На сервере по этому коду пока пусто.';
+    if (result.status === 'empty') {
+      hint.textContent = 'На сервере по этому коду записей нет. Этот телефон теперь отправляет свои под этим кодом.';
       return;
     }
     closeSheet();
-    showToast('Записи подтянуты. Персик одобряет.');
+    showToast(result.added ? `Добавлено записей: ${result.added}` : 'Новых записей нет, всё уже на месте');
   } catch {
     hint.textContent = 'Сервер не ответил. Проверь интернет и попробуй ещё раз.';
   }
