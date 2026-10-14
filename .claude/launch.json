@@ -4,7 +4,7 @@
     {
       "name": "perspay",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8787", "--bind", "127.0.0.1"],
+      "runtimeArgs": ["tools/serve.py", "8787"],
       "port": 8787
     }
   ]

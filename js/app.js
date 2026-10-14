@@ -4,7 +4,7 @@ import { initDiary, renderDiary } from './views/diary.js';
 import { initPersik, renderPersik } from './views/persik.js';
 import { initSync } from './sync.js';
 
-const APP_VERSION = '3';
+const APP_VERSION = '4';
 const VIEW_KEY = 'perspay.view';
 const HINT_KEY = 'perspay.installHintDismissed';
 const tabs = [...document.querySelectorAll('.tab')];
@@ -64,7 +64,7 @@ function registerServiceWorker() {
     reloading = true;
     location.reload();
   });
-  navigator.serviceWorker.register('sw.js').then((reg) => reg.update()).catch(() => {});
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then((reg) => reg.update()).catch(() => {});
 }
 
 function showVersion() {
