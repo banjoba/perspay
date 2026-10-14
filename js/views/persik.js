@@ -3,12 +3,17 @@ import { getState, updateSettings, exportJson, replaceState, resetState } from '
 import { openSheet, closeSheet } from '../components/sheet.js';
 import { showToast } from '../components/toast.js';
 import { formatHours } from '../feeding.js';
-import { clamp, toDateValue } from '../util.js';
+import { clamp, toDateValue, escapeHtml } from '../util.js';
+import {
+  getSyncMeta, onSyncChange, enableSync, disableSync, adoptToken, pullNow, pushNow, isValidToken, widgetStub,
+} from '../sync.js';
+import { formatTime } from '../feeding.js';
 
 const els = {
   grid: document.getElementById('sticker-grid'),
   rules: document.getElementById('settings-rules'),
   quiet: document.getElementById('settings-quiet'),
+  widget: document.getElementById('settings-widget'),
   exportBtn: document.getElementById('data-export'),
   importBtn: document.getElementById('data-import'),
   fileInput: document.getElementById('data-file'),
@@ -28,6 +33,10 @@ export function initPersik() {
   els.grid.addEventListener('click', onStickerTap);
   els.rules.addEventListener('click', onRuleTap);
   els.quiet.addEventListener('change', onQuietChange);
+  els.widget.addEventListener('click', onWidgetTap);
+  els.widget.addEventListener('change', onWidgetToggle);
+  onSyncChange(renderWidget);
+  renderWidget();
   bindData();
   renderPersik();
 }
@@ -201,4 +210,105 @@ function bindReset() {
     els.resetBtn.textContent = 'Стереть всё';
     showToast('Всё стёрто. Персик начинает с чистого листа.');
   });
+}
+
+function renderWidget() {
+  const meta = getSyncMeta();
+  const status = meta.lastError
+    ? `<span class="row__hint">${meta.lastError}</span>`
+    : meta.lastPushAt ? `<span class="row__hint">Отправлено в ${formatTime(meta.lastPushAt)}</span>` : '<span class="row__hint">Ещё не отправлялось</span>';
+  const enabledRows = meta.enabled ? `
+    <div class="row">
+      <div><span class="row__label">Код синхронизации</span><code class="sync-code">${meta.token}</code></div>
+      <button class="btn btn--ghost btn--inline" type="button" data-widget="copy-code">Скопировать</button>
+    </div>
+    <div class="row"><div><span class="row__label">Статус</span>${status}</div><button class="btn btn--ghost btn--inline" type="button" data-widget="push">Отправить</button></div>
+    <button class="btn btn--primary" type="button" data-widget="howto">Как поставить виджет</button>` : '';
+  els.widget.innerHTML = `
+    <div class="row">
+      <div><span class="row__label">Синхронизация для виджета</span><span class="row__hint">Записи уходят на сервер, виджет читает их оттуда</span></div>
+      <label class="switch"><input type="checkbox" data-widget="toggle" ${meta.enabled ? 'checked' : ''}><i></i></label>
+    </div>
+    ${enabledRows}
+    <button class="btn btn--ghost" type="button" data-widget="restore">Подтянуть записи по коду</button>`;
+}
+
+function onWidgetToggle(e) {
+  if (e.target.dataset.widget !== 'toggle') return;
+  if (e.target.checked) {
+    enableSync();
+    showToast('Синхронизация включена');
+  } else {
+    disableSync();
+  }
+}
+
+function onWidgetTap(e) {
+  const action = e.target.closest('[data-widget]')?.dataset.widget;
+  if (action === 'copy-code') copyText(getSyncMeta().token, 'Код скопирован');
+  if (action === 'push') pushNow().then((ok) => showToast(ok ? 'Отправлено' : 'Не получилось отправить'));
+  if (action === 'howto') openHowToSheet();
+  if (action === 'restore') openRestoreSheet();
+}
+
+async function copyText(text, message) {
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast(message);
+  } catch {
+    showToast('Не удалось скопировать, выдели текст вручную');
+  }
+}
+
+function openHowToSheet() {
+  const token = getSyncMeta().token;
+  openSheet(`
+    <h3>Виджет Персика</h3>
+    <ol class="steps">
+      <li>Поставь из App Store бесплатное приложение <b>Scriptable</b>.</li>
+      <li>Нажми кнопку ниже, скрипт скопируется в буфер.</li>
+      <li>В Scriptable нажми «+», вставь скрипт, назови его «Персик» и закрой.</li>
+      <li>На экране «Домой» зажми пустое место → «+» → найди Scriptable → выбери размер.</li>
+      <li>Зажми новый виджет → «Изменить виджет» → Script: «Персик».</li>
+    </ol>
+    <p class="sheet__hint">Код синхронизации уже вшит в скрипт. Виджет обновляется сам, примерно раз в 15 минут, а время с последнего кормления тикает живьём.</p>
+    <button class="btn btn--primary" type="button" id="copy-stub">Скопировать скрипт</button>
+    <button class="btn btn--ghost" type="button" id="close-howto">Закрыть</button>
+  `, (panel) => {
+    panel.querySelector('#copy-stub').addEventListener('click', () => copyText(widgetStub(token), 'Скрипт скопирован, вставь его в Scriptable'));
+    panel.querySelector('#close-howto').addEventListener('click', closeSheet);
+  });
+}
+
+function openRestoreSheet() {
+  openSheet(`
+    <h3>Подтянуть записи</h3>
+    <p class="sheet__hint">Вставь код синхронизации с другого телефона. Текущие записи на этом телефоне заменятся серверными.</p>
+    <div class="field"><label for="restore-code">Код</label><input id="restore-code" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="32 символа" value="${escapeHtml(getSyncMeta().token || '')}"></div>
+    <p class="sheet__hint" id="restore-hint"></p>
+    <button class="btn btn--primary" type="button" id="restore-go">Подтянуть</button>
+  `, (panel) => {
+    panel.querySelector('#restore-go').addEventListener('click', () => restoreFromCode(panel));
+  });
+}
+
+async function restoreFromCode(panel) {
+  const hint = panel.querySelector('#restore-hint');
+  const code = panel.querySelector('#restore-code').value.trim().toLowerCase();
+  if (!isValidToken(code)) {
+    hint.textContent = 'Код выглядит неправильно.';
+    return;
+  }
+  adoptToken(code);
+  try {
+    const result = await pullNow();
+    if (result === 'empty') {
+      hint.textContent = 'На сервере по этому коду пока пусто.';
+      return;
+    }
+    closeSheet();
+    showToast('Записи подтянуты. Персик одобряет.');
+  } catch {
+    hint.textContent = 'Сервер не ответил. Проверь интернет и попробуй ещё раз.';
+  }
 }

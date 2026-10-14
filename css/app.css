@@ -485,6 +485,13 @@ p { margin: 0; }
 
 .about { text-align: center; color: var(--text-3); font-size: 12px; font-weight: 700; padding: 8px 0 4px; }
 
+.btn--inline { width: auto; min-height: 40px; padding: 0 14px; font-size: 14px; margin: 0; flex: none; }
+.sync-code { display: block; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px; color: var(--text-2); word-break: break-all; margin-top: 2px; -webkit-user-select: all; user-select: all; }
+.steps { margin: 0 0 12px; padding-left: 20px; color: var(--text); font-size: 15px; line-height: 1.45; }
+.steps li { margin-bottom: 8px; }
+.row > .btn { margin-top: 0; }
+#settings-widget > .btn { margin-top: 12px; }
+
 /* Tab bar */
 .tabbar {
   position: absolute;

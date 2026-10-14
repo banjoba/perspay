@@ -1,0 +1,14 @@
+[Unit]
+Description=Persik feeding sync endpoint
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /opt/persik-sync/persik_sync.py
+Environment=PERSIK_DATA=/var/lib/persik-sync
+Environment=PERSIK_PORT=8890
+Environment=PERSIK_ORIGIN=https://banjoba.github.io
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

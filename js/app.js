@@ -2,6 +2,7 @@ import { subscribe } from './store.js';
 import { initHome, renderHome } from './views/home.js';
 import { initDiary, renderDiary } from './views/diary.js';
 import { initPersik, renderPersik } from './views/persik.js';
+import { initSync } from './sync.js';
 
 const VIEW_KEY = 'perspay.view';
 const HINT_KEY = 'perspay.installHintDismissed';
@@ -58,6 +59,7 @@ function registerServiceWorker() {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 
+initSync();
 initHome();
 initDiary();
 initPersik();
