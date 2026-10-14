@@ -1,6 +1,7 @@
-// PERSIK_WIDGET v4 — Scriptable widget for the Persik feeding diary.
+// PERSIK_WIDGET v5 — Scriptable widget for the Persik feeding diary.
 // Runs inside the stub copied from the app; TOKEN comes from the stub or the widget parameter.
-// Tapping the widget opens Scriptable in app mode: confirm → POST /feed → the app merges it on next open.
+// Tapping the widget opens Scriptable in app mode and feeds right away: POST /feed (the server
+// enforces the minimum gap) → short result → the app merges the feeding on its next open.
 // «Открыть дневник» runs the Shortcut named OPEN_SHORTCUT (opens the home-screen app); empty = Safari.
 const SYNC_BASE = "https://185-173-144-167.sslip.io/persik/";
 const STICKER_BASE = "https://banjoba.github.io/perspay/stickerpack/persik-";
@@ -139,23 +140,9 @@ async function runInApp() {
     await showResult("Нет кода", "Скопируй скрипт из приложения: Персик → Виджет на экране");
     return;
   }
-  const { data } = await loadState();
-  const info = data ? describe(data, new Date()) : null;
-  const ask = new Alert();
-  ask.title = "Покормить Персика?";
-  ask.message = info && info.last
-    ? `С последнего кормления прошло ${duration(info.minutes)}. Статус: ${info.label.toLowerCase()}.`
-    : "Записей пока нет, это будет первое кормление.";
-  ask.addAction("Покормить сейчас");
-  ask.addAction("Открыть дневник");
-  ask.addCancelAction("Отмена");
-  const choice = await ask.presentAlert();
-  if (choice === 0) {
-    const result = await feedNow();
-    await showResult(result.ok ? "Ням!" : "Не записано", result.message || "");
-  } else if (choice === 1) {
-    Safari.open(OPEN_URL);
-  }
+  const result = await feedNow();
+  const openDiary = await showResult(result.ok ? "Ням!" : "Рано", result.message || "");
+  if (openDiary) Safari.open(OPEN_URL);
 }
 
 async function showResult(title, message) {
@@ -163,7 +150,8 @@ async function showResult(title, message) {
   done.title = title;
   done.message = message;
   done.addAction("Готово");
-  await done.presentAlert();
+  done.addAction("Открыть дневник");
+  return (await done.presentAlert()) === 1;
 }
 
 function addTimer(stack, last, size) {
