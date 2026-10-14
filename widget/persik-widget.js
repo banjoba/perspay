@@ -1,11 +1,15 @@
-// PERSIK_WIDGET v2 — Scriptable widget for the Persik feeding diary.
+// PERSIK_WIDGET v3 — Scriptable widget for the Persik feeding diary.
 // Runs inside the stub copied from the app; TOKEN comes from the stub or the widget parameter.
+// Tapping the widget runs the Shortcut named OPEN_SHORTCUT (which opens the home-screen app);
+// an empty name falls back to opening the site in Safari.
 const SYNC_BASE = "https://185-173-144-167.sslip.io/persik/";
 const STICKER_BASE = "https://banjoba.github.io/perspay/stickerpack/persik-";
 const APP_URL = "https://banjoba.github.io/perspay/";
 const REFRESH_MINUTES = 10;
 
 const token = (typeof TOKEN !== "undefined" && TOKEN) || args.widgetParameter || "";
+const shortcutName = typeof OPEN_SHORTCUT === "undefined" ? "Персик" : OPEN_SHORTCUT;
+const OPEN_URL = shortcutName ? `shortcuts://run-shortcut?name=${encodeURIComponent(shortcutName)}` : APP_URL;
 const fm = FileManager.local();
 const family = config.widgetFamily || "medium";
 
@@ -139,7 +143,7 @@ function addLabel(stack, text, size, color, bold) {
 async function buildHome(info, offline) {
   const w = new ListWidget();
   w.backgroundColor = COLORS.bg;
-  w.url = APP_URL;
+  w.url = OPEN_URL;
   w.setPadding(14, 14, 12, 14);
   const toneColor = COLORS[info.tone] || COLORS.muted;
   const sticker = await loadSticker(info.sticker);
@@ -172,7 +176,7 @@ async function buildHome(info, offline) {
 
 function buildAccessory(info) {
   const w = new ListWidget();
-  w.url = APP_URL;
+  w.url = OPEN_URL;
   if (family === "accessoryCircular") {
     w.addAccessoryWidgetBackground = true;
     const st = w.addStack();
@@ -194,7 +198,7 @@ function buildAccessory(info) {
 function buildMessage(title, text) {
   const w = new ListWidget();
   w.backgroundColor = COLORS.bg;
-  w.url = APP_URL;
+  w.url = OPEN_URL;
   w.setPadding(14, 14, 14, 14);
   addLabel(w, "Персик", 12, COLORS.muted, true);
   addLabel(w, title, 16, COLORS.text, true);

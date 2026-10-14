@@ -105,6 +105,8 @@ export function widgetStub(token) {
   return [
     '// Персик — виджет кормления. Код виджета подгружается с сайта приложения.',
     `const TOKEN = "${token}";`,
+    '// Имя команды в «Быстрых командах», которая открывает приложение. Пусто = открывать сайт в Safari.',
+    'const OPEN_SHORTCUT = "Персик";',
     `const SOURCE = "${WIDGET_SOURCE}";`,
     'const fm = FileManager.local();',
     'const cachePath = fm.joinPath(fm.cacheDirectory(), "persik-widget.js");',
@@ -119,7 +121,7 @@ export function widgetStub(token) {
     'try {',
     '  if (!code) throw new Error("нужен интернет при первом запуске");',
     '  const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;',
-    '  await new AsyncFunction("TOKEN", code)(TOKEN);',
+    '  await new AsyncFunction("TOKEN", "OPEN_SHORTCUT", code)(TOKEN, OPEN_SHORTCUT);',
     '} catch (e) {',
     '  const w = new ListWidget();',
     '  w.addText("Персик: " + e.message);',
