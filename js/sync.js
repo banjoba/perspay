@@ -4,6 +4,8 @@ export const SYNC_BASE = 'https://185-173-144-167.sslip.io/persik/';
 export const WIDGET_SOURCE = 'https://banjoba.github.io/perspay/widget/persik-widget.js';
 const META_KEY = 'perspay.sync';
 const PUSH_DELAY_MS = 1500;
+const PULL_THROTTLE_MS = 45000;
+let lastPullAt = 0;
 
 const listeners = new Set();
 let pushTimer = null;
@@ -132,11 +134,20 @@ export function widgetStub(token) {
   ].join('\n');
 }
 
+export function pullIfDue() {
+  if (!meta.enabled || !meta.token || Date.now() - lastPullAt < PULL_THROTTLE_MS) return;
+  lastPullAt = Date.now();
+  pullNow().catch(() => {});
+}
+
 export function initSync() {
   saveMeta();
   subscribe(() => schedulePush());
   document.addEventListener('visibilitychange', () => {
     if (document.hidden && pushTimer) pushNow({ keepalive: true });
+    if (!document.hidden) pullIfDue();
   });
+  window.addEventListener('pageshow', pullIfDue);
   if (meta.enabled && meta.token && !meta.lastPushAt) schedulePush(0);
+  else pullIfDue();
 }

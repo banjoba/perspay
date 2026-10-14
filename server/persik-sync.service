@@ -7,6 +7,7 @@ ExecStart=/usr/bin/python3 /opt/persik-sync/persik_sync.py
 Environment=PERSIK_DATA=/var/lib/persik-sync
 Environment=PERSIK_PORT=8890
 Environment=PERSIK_ORIGIN=https://banjoba.github.io
+Environment=PERSIK_TZ=Europe/Moscow
 Restart=always
 RestartSec=3
 

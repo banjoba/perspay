@@ -4,7 +4,7 @@ import { initDiary, renderDiary } from './views/diary.js';
 import { initPersik, renderPersik } from './views/persik.js';
 import { initSync } from './sync.js';
 
-const APP_VERSION = '6';
+const APP_VERSION = '7';
 const VIEW_KEY = 'perspay.view';
 const HINT_KEY = 'perspay.installHintDismissed';
 const tabs = [...document.querySelectorAll('.tab')];

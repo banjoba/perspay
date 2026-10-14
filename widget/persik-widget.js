@@ -1,11 +1,11 @@
-// PERSIK_WIDGET v3 — Scriptable widget for the Persik feeding diary.
+// PERSIK_WIDGET v4 — Scriptable widget for the Persik feeding diary.
 // Runs inside the stub copied from the app; TOKEN comes from the stub or the widget parameter.
-// Tapping the widget runs the Shortcut named OPEN_SHORTCUT (which opens the home-screen app);
-// an empty name falls back to opening the site in Safari.
+// Tapping the widget opens Scriptable in app mode: confirm → POST /feed → the app merges it on next open.
+// «Открыть дневник» runs the Shortcut named OPEN_SHORTCUT (opens the home-screen app); empty = Safari.
 const SYNC_BASE = "https://185-173-144-167.sslip.io/persik/";
 const STICKER_BASE = "https://banjoba.github.io/perspay/stickerpack/persik-";
 const APP_URL = "https://banjoba.github.io/perspay/";
-const REFRESH_MINUTES = 10;
+const REFRESH_MINUTES = 5;
 
 const token = (typeof TOKEN !== "undefined" && TOKEN) || args.widgetParameter || "";
 const shortcutName = typeof OPEN_SHORTCUT === "undefined" ? "Персик" : OPEN_SHORTCUT;
@@ -121,6 +121,51 @@ function describe(data, now) {
   };
 }
 
+async function feedNow() {
+  const req = new Request(`${SYNC_BASE}${token}/feed`);
+  req.method = "POST";
+  req.headers = { "Content-Type": "text/plain" };
+  req.body = "{}";
+  req.timeoutInterval = 10;
+  try {
+    return await req.loadJSON();
+  } catch (e) {
+    return { ok: false, message: "Нет связи с сервером, попробуй ещё раз" };
+  }
+}
+
+async function runInApp() {
+  if (!token) {
+    await showResult("Нет кода", "Скопируй скрипт из приложения: Персик → Виджет на экране");
+    return;
+  }
+  const { data } = await loadState();
+  const info = data ? describe(data, new Date()) : null;
+  const ask = new Alert();
+  ask.title = "Покормить Персика?";
+  ask.message = info && info.last
+    ? `С последнего кормления прошло ${duration(info.minutes)}. Статус: ${info.label.toLowerCase()}.`
+    : "Записей пока нет, это будет первое кормление.";
+  ask.addAction("Покормить сейчас");
+  ask.addAction("Открыть дневник");
+  ask.addCancelAction("Отмена");
+  const choice = await ask.presentAlert();
+  if (choice === 0) {
+    const result = await feedNow();
+    await showResult(result.ok ? "Ням!" : "Не записано", result.message || "");
+  } else if (choice === 1) {
+    Safari.open(OPEN_URL);
+  }
+}
+
+async function showResult(title, message) {
+  const done = new Alert();
+  done.title = title;
+  done.message = message;
+  done.addAction("Готово");
+  await done.presentAlert();
+}
+
 function addTimer(stack, last, size) {
   const t = last ? stack.addDate(new Date(last.at)) : stack.addText("—");
   if (last) t.applyTimerStyle();
@@ -143,7 +188,6 @@ function addLabel(stack, text, size, color, bold) {
 async function buildHome(info, offline) {
   const w = new ListWidget();
   w.backgroundColor = COLORS.bg;
-  w.url = OPEN_URL;
   w.setPadding(14, 14, 12, 14);
   const toneColor = COLORS[info.tone] || COLORS.muted;
   const sticker = await loadSticker(info.sticker);
@@ -176,7 +220,6 @@ async function buildHome(info, offline) {
 
 function buildAccessory(info) {
   const w = new ListWidget();
-  w.url = OPEN_URL;
   if (family === "accessoryCircular") {
     w.addAccessoryWidgetBackground = true;
     const st = w.addStack();
@@ -198,7 +241,6 @@ function buildAccessory(info) {
 function buildMessage(title, text) {
   const w = new ListWidget();
   w.backgroundColor = COLORS.bg;
-  w.url = OPEN_URL;
   w.setPadding(14, 14, 14, 14);
   addLabel(w, "Персик", 12, COLORS.muted, true);
   addLabel(w, title, 16, COLORS.text, true);
@@ -209,6 +251,11 @@ function buildMessage(title, text) {
 }
 
 async function main() {
+  if (config.runsInApp) {
+    await runInApp();
+    Script.complete();
+    return;
+  }
   let widget;
   if (!token) {
     widget = buildMessage("Нет кода", "Скопируй скрипт из приложения: Персик → Виджет на экране");
@@ -224,11 +271,7 @@ async function main() {
     }
   }
   widget.refreshAfterDate = new Date(Date.now() + REFRESH_MINUTES * 60000);
-  if (config.runsInWidget) {
-    Script.setWidget(widget);
-  } else {
-    await widget.presentMedium();
-  }
+  Script.setWidget(widget);
   Script.complete();
 }
 

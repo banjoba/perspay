@@ -93,8 +93,10 @@ export function mergeFeedings(incoming) {
     knownMinutes.add(minute);
     added += 1;
   }
-  state.feedings.sort((a, b) => a.at - b.at);
-  persist();
+  if (added) {
+    state.feedings.sort((a, b) => a.at - b.at);
+    persist();
+  }
   return added;
 }
 
